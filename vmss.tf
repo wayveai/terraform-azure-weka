@@ -1,17 +1,17 @@
-data azurerm_resource_group "rg"{
+data "azurerm_resource_group" "rg" {
   name = var.rg_name
 }
 
 data "azurerm_subnet" "subnets" {
   count                = length(var.subnets)
-  resource_group_name  = var.rg_name
+  resource_group_name  = var.vnet_rg
   virtual_network_name = var.vnet_name
   name                 = var.subnets[count.index]
 }
 
 data "azurerm_virtual_network" "vnet" {
-  name = var.vnet_name
-  resource_group_name = var.rg_name
+  name                = var.vnet_name
+  resource_group_name = var.vnet_rg
 }
 
 # ===================== SSH key ++++++++++++++++++++++++= #
@@ -36,13 +36,13 @@ resource "local_file" "private_key" {
 }
 
 locals {
-  ssh_path        = "/tmp/${var.prefix}-${var.cluster_name}"
-  public_ssh_key  = var.ssh_public_key == null ? tls_private_key.ssh_key[0].public_key_openssh : file(var.ssh_public_key)
-  private_ssh_key = var.ssh_private_key == null ? tls_private_key.ssh_key[0].private_key_pem : file(var.ssh_private_key)
-  disk_size       = var.default_disk_size + var.traces_per_ionode * (var.container_number_map[var.instance_type].compute + var.container_number_map[var.instance_type].drive + var.container_number_map[var.instance_type].frontend)
-  private_nic_first_index = var.private_network ? 0 : 1
-  alphanumeric_cluster_name =  lower(replace(var.cluster_name,"/\\W|_|\\s/",""))
-  alphanumeric_prefix_name  = lower(replace(var.prefix,"/\\W|_|\\s/",""))
+  ssh_path                  = "/tmp/${var.prefix}-${var.cluster_name}"
+  public_ssh_key            = var.ssh_public_key == null ? tls_private_key.ssh_key[0].public_key_openssh : file(var.ssh_public_key)
+  private_ssh_key           = var.ssh_private_key == null ? tls_private_key.ssh_key[0].private_key_pem : file(var.ssh_private_key)
+  disk_size                 = var.default_disk_size + var.traces_per_ionode * (var.container_number_map[var.instance_type].compute + var.container_number_map[var.instance_type].drive + var.container_number_map[var.instance_type].frontend)
+  private_nic_first_index   = var.private_network ? 0 : 1
+  alphanumeric_cluster_name = lower(replace(var.cluster_name, "/\\W|_|\\s/", ""))
+  alphanumeric_prefix_name  = lower(replace(var.prefix, "/\\W|_|\\s/", ""))
 }
 
 data "template_file" "init" {
@@ -62,7 +62,7 @@ data "template_file" "init" {
 }
 
 data "template_cloudinit_config" "cloud_init" {
-  gzip          = false
+  gzip = false
   part {
     content_type = "text/x-shellscript"
     content      = data.template_file.init.rendered
@@ -73,7 +73,7 @@ resource "azurerm_proximity_placement_group" "ppg" {
   name                = "${var.prefix}-${var.cluster_name}-backend-ppg"
   location            = data.azurerm_resource_group.rg.location
   resource_group_name = var.rg_name
-  tags                = merge(var.tags_map, {"weka_cluster": var.cluster_name})
+  tags                = merge(var.tags_map, { "weka_cluster" : var.cluster_name })
 }
 
 resource "azurerm_linux_virtual_machine_scale_set" "custom_image_vmss" {
@@ -90,7 +90,7 @@ resource "azurerm_linux_virtual_machine_scale_set" "custom_image_vmss" {
   custom_data                     = base64encode(data.template_file.init.rendered)
   disable_password_authentication = true
   proximity_placement_group_id    = azurerm_proximity_placement_group.ppg.id
-  tags                            = merge(var.tags_map, {"weka_cluster": var.cluster_name})
+  tags                            = merge(var.tags_map, { "weka_cluster" : var.cluster_name })
   source_image_id                 = var.custom_image_id
 
   os_disk {
@@ -146,9 +146,9 @@ resource "azurerm_linux_virtual_machine_scale_set" "custom_image_vmss" {
     }
   }
   lifecycle {
-    ignore_changes = [ instances, custom_data ]
+    ignore_changes = [instances, custom_data]
   }
-  depends_on = [azurerm_lb_backend_address_pool.lb_backend_pool,azurerm_lb_probe.backend_lb_probe,azurerm_proximity_placement_group.ppg, azurerm_lb_rule.backend_lb_rule, azurerm_lb_rule.ui_lb_rule]
+  depends_on = [azurerm_lb_backend_address_pool.lb_backend_pool, azurerm_lb_probe.backend_lb_probe, azurerm_proximity_placement_group.ppg, azurerm_lb_rule.backend_lb_rule, azurerm_lb_rule.ui_lb_rule]
 }
 
 
@@ -166,7 +166,7 @@ resource "azurerm_linux_virtual_machine_scale_set" "default_image_vmss" {
   custom_data                     = base64encode(data.template_file.init.rendered)
   disable_password_authentication = true
   proximity_placement_group_id    = azurerm_proximity_placement_group.ppg.id
-  tags                            = merge(var.tags_map, {"weka_cluster": var.cluster_name})
+  tags                            = merge(var.tags_map, { "weka_cluster" : var.cluster_name })
   source_image_reference {
     offer     = lookup(var.linux_vm_image, "offer", null)
     publisher = lookup(var.linux_vm_image, "publisher", null)
@@ -226,9 +226,9 @@ resource "azurerm_linux_virtual_machine_scale_set" "default_image_vmss" {
     }
   }
   lifecycle {
-    ignore_changes = [ instances, custom_data ]
+    ignore_changes = [instances, custom_data]
   }
-  depends_on = [azurerm_lb_backend_address_pool.lb_backend_pool,azurerm_lb_probe.backend_lb_probe,azurerm_proximity_placement_group.ppg, azurerm_lb_rule.backend_lb_rule, azurerm_lb_rule.ui_lb_rule]
+  depends_on = [azurerm_lb_backend_address_pool.lb_backend_pool, azurerm_lb_probe.backend_lb_probe, azurerm_proximity_placement_group.ppg, azurerm_lb_rule.backend_lb_rule, azurerm_lb_rule.ui_lb_rule]
 }
 
 resource "azurerm_role_assignment" "vm_role_assignment" {
@@ -245,7 +245,7 @@ resource "null_resource" "force-delete-vmss" {
     subscription_id = var.subscription_id
   }
   provisioner "local-exec" {
-    when = destroy
+    when    = destroy
     command = "az vmss delete --name ${self.triggers.vmss_name} --resource-group ${self.triggers.rg_name} --force-deletion true --subscription ${self.triggers.subscription_id}"
   }
   depends_on = [azurerm_linux_virtual_machine_scale_set.default_image_vmss, azurerm_linux_virtual_machine_scale_set.custom_image_vmss]
