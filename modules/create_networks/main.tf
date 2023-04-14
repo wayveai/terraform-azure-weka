@@ -30,6 +30,23 @@ resource "azurerm_subnet" "subnet" {
   depends_on = [data.azurerm_resource_group.rg, azurerm_virtual_network.vnet]
 }
 
+resource "azurerm_nat_gateway" "ngw" {
+  count               = 2
+  name                = "${var.prefix}-nat-gateway-${count.index}"
+  resource_group_name = var.vnet_rg
+  location            = data.azurerm_resource_group.rg.location
+}
+
+resource "azurerm_subnet_nat_gateway_association" "ngwas" {
+  nat_gateway_id = azurerm_nat_gateway.ngw[0].id
+  subnet_id      = azurerm_subnet.subnet[0].id
+}
+
+resource "azurerm_subnet_nat_gateway_association" "ngwasd" {
+  nat_gateway_id = azurerm_nat_gateway.ngw[1].id
+  subnet_id      = azurerm_subnet.subnet-delegation.id
+}
+
 resource "azurerm_subnet" "subnet-delegation" {
   name                 = "${var.prefix}-subnet-delegation"
   resource_group_name  = var.vnet_rg
