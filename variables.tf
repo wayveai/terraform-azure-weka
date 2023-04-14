@@ -83,7 +83,6 @@ variable "weka_version" {
 variable "get_weka_io_token" {
   type        = string
   description = "The token to download the Weka release from get.weka.io."
-  default     = ""
   sensitive   = true
 }
 
@@ -107,7 +106,7 @@ variable "ssh_public_key" {
 
 variable "ssh_private_key" {
   type        = string
-  description = "The path to the VM private key. If it is not set, the key is auto-generated. If it is set, also set the ssh_private_key. The private key used for connecting to the deployed virtual machines to initiate the clusterization of Weka."
+  description = "The path to the VM private key. If it is not set, the key is auto-generated. If it is set, also set the ssh_public_key. The private key used for connecting to the deployed virtual machines to initiate the clusterization of Weka."
   default     = null
 }
 

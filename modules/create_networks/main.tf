@@ -1,5 +1,5 @@
 data "azurerm_resource_group" "rg" {
-  name  = var.rg_name
+  name = var.rg_name
 }
 
 resource "azurerm_virtual_network" "vnet" {
@@ -13,26 +13,26 @@ resource "azurerm_virtual_network" "vnet" {
 }
 
 data "azurerm_virtual_network" "vnet_data" {
-  count               = var.vnet_name != null  ? 1 : 0
+  count               = var.vnet_name != null ? 1 : 0
   name                = var.vnet_name
-  resource_group_name = data.azurerm_resource_group.rg.name
+  resource_group_name = var.vnet_rg
 }
 
 resource "azurerm_subnet" "subnet" {
   count                = length(var.subnets_name_list) == 0 ? length(var.subnet_prefixes) : 0
-  resource_group_name  = data.azurerm_resource_group.rg.name
+  resource_group_name  = var.vnet_rg
   name                 = "${var.prefix}-subnet-${count.index}"
   address_prefixes     = [var.subnet_prefixes[count.index]]
   virtual_network_name = var.vnet_name != null ? data.azurerm_virtual_network.vnet_data[0].name : azurerm_virtual_network.vnet[0].name
   lifecycle {
-    ignore_changes = [service_endpoint_policy_ids,service_endpoints]
+    ignore_changes = [service_endpoint_policy_ids, service_endpoints]
   }
-  depends_on           = [data.azurerm_resource_group.rg,azurerm_virtual_network.vnet]
+  depends_on = [data.azurerm_resource_group.rg, azurerm_virtual_network.vnet]
 }
 
 resource "azurerm_subnet" "subnet-delegation" {
   name                 = "${var.prefix}-subnet-delegation"
-  resource_group_name  = var.rg_name
+  resource_group_name  = var.vnet_rg
   virtual_network_name = var.vnet_name != null ? data.azurerm_virtual_network.vnet_data[0].name : azurerm_virtual_network.vnet[0].name
   address_prefixes     = [var.subnet_delegation]
 
@@ -48,7 +48,7 @@ resource "azurerm_subnet" "subnet-delegation" {
 data "azurerm_subnet" "subnets_data" {
   count                = length(var.subnets_name_list) > 0 ? length(var.subnets_name_list) : 0
   name                 = var.subnets_name_list[count.index]
-  resource_group_name  = data.azurerm_resource_group.rg.name
+  resource_group_name  = var.vnet_rg
   virtual_network_name = var.vnet_name != null ? var.vnet_name : azurerm_virtual_network.vnet[0].name
 }
 
