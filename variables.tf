@@ -9,6 +9,11 @@ variable "rg_name" {
   description = "A predefined resource group in the Azure subscription."
 }
 
+variable "region" {
+  type    = string
+  default = "eastus"
+}
+
 variable "vm_username" {
   type        = string
   description = "The user name for logging in to the virtual machines."
@@ -128,10 +133,10 @@ variable "apt_repo_url" {
   default     = ""
 }
 
-variable "private_dns_zone_name" {
-  type        = string
-  description = "The private DNS zone name."
-}
+# variable "private_dns_zone_name" {
+#   type        = string
+#   description = "The private DNS zone name."
+# }
 
 variable "ofed_version" {
   type        = string

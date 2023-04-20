@@ -69,7 +69,7 @@ resource "azurerm_subnet_route_table_association" "rt-association" {
 }
 
 resource "azurerm_route" "public_route" {
-  count               = var.private_network ? 0 : 1
+  count               = 1
   resource_group_name = data.azurerm_resource_group.rg.name
   name                = "${var.prefix}-route"
   route_table_name    = azurerm_route_table.rt.name
@@ -138,16 +138,16 @@ resource "azurerm_subnet_network_security_group_association" "sg-association" {
 }
 
 # ================== Private DNS ========================= #
-resource "azurerm_private_dns_zone" "dns" {
-  name                = "${var.prefix}.private.net"
-  resource_group_name = data.azurerm_resource_group.rg.name
-  tags                = merge(var.tags_map)
-}
+# resource "azurerm_private_dns_zone" "dns" {
+#   name                = "${var.prefix}.private.net"
+#   resource_group_name = data.azurerm_resource_group.rg.name
+#   tags                = merge(var.tags_map)
+# }
 
-resource "azurerm_private_dns_zone_virtual_network_link" "dns_vnet_link" {
-  name                  = "${var.prefix}-private-network-link"
-  resource_group_name   = data.azurerm_resource_group.rg.name
-  private_dns_zone_name = azurerm_private_dns_zone.dns.name
-  virtual_network_id    = var.vnet_name != null ? data.azurerm_virtual_network.vnet_data[0].id : azurerm_virtual_network.vnet[0].id
-  registration_enabled  = true
-}
+# resource "azurerm_private_dns_zone_virtual_network_link" "dns_vnet_link" {
+#   name                  = "${var.prefix}-private-network-link"
+#   resource_group_name   = data.azurerm_resource_group.rg.name
+#   private_dns_zone_name = azurerm_private_dns_zone.dns.name
+#   virtual_network_id    = var.vnet_name != null ? data.azurerm_virtual_network.vnet_data[0].id : azurerm_virtual_network.vnet[0].id
+#   registration_enabled  = true
+# }

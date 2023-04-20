@@ -71,7 +71,7 @@ data "template_cloudinit_config" "cloud_init" {
 
 resource "azurerm_proximity_placement_group" "ppg" {
   name                = "${var.prefix}-${var.cluster_name}-backend-ppg"
-  location            = data.azurerm_resource_group.rg.location
+  location            = var.region
   resource_group_name = var.rg_name
   tags                = merge(var.tags_map, { "weka_cluster" : var.cluster_name })
 }

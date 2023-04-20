@@ -1,6 +1,6 @@
 resource "azurerm_log_analytics_workspace" "la_workspace" {
   name                = "${var.prefix}-${var.cluster_name}-workspace"
-  location            = data.azurerm_resource_group.rg.location
+  location            = var.region
   resource_group_name = data.azurerm_resource_group.rg.name
   sku                 = "PerGB2018"
   retention_in_days   = 30
@@ -8,7 +8,7 @@ resource "azurerm_log_analytics_workspace" "la_workspace" {
 
 resource "azurerm_application_insights" "application_insights" {
   name                = "${var.prefix}-${var.cluster_name}-application-insights"
-  location            = data.azurerm_resource_group.rg.location
+  location            = var.region
   resource_group_name = data.azurerm_resource_group.rg.name
   workspace_id        = azurerm_log_analytics_workspace.la_workspace.id
   application_type    = "web"
@@ -26,9 +26,9 @@ resource "azurerm_monitor_diagnostic_setting" "insights_diagnostic_setting" {
     }
   }
   lifecycle {
-    ignore_changes = [metric,log_analytics_destination_type]
+    ignore_changes = [metric, log_analytics_destination_type]
   }
-  depends_on = [azurerm_linux_function_app.function_app,azurerm_log_analytics_workspace.la_workspace]
+  depends_on = [azurerm_linux_function_app.function_app, azurerm_log_analytics_workspace.la_workspace]
 }
 
 resource "azurerm_monitor_diagnostic_setting" "function_diagnostic_setting" {
@@ -44,27 +44,27 @@ resource "azurerm_monitor_diagnostic_setting" "function_diagnostic_setting" {
     }
   }
   lifecycle {
-    ignore_changes = [metric,log_analytics_destination_type]
+    ignore_changes = [metric, log_analytics_destination_type]
   }
-  depends_on = [azurerm_linux_function_app.function_app,azurerm_log_analytics_workspace.la_workspace]
+  depends_on = [azurerm_linux_function_app.function_app, azurerm_log_analytics_workspace.la_workspace]
 }
 
 
 resource "azurerm_service_plan" "app_service_plan" {
   name                = "${var.prefix}-${var.cluster_name}-app-service-plan"
   resource_group_name = data.azurerm_resource_group.rg.name
-  location            = data.azurerm_resource_group.rg.location
+  location            = var.region
   os_type             = "Linux"
   sku_name            = "EP2"
 }
 
 locals {
   stripe_width_calculated = var.cluster_size - var.protection_level - 1
-  stripe_width = local.stripe_width_calculated < 16 ? local.stripe_width_calculated : 16
+  stripe_width            = local.stripe_width_calculated < 16 ? local.stripe_width_calculated : 16
 }
 
 locals {
-  location              = data.azurerm_resource_group.rg.location
+  location              = var.region
   function_app_zip_name = "${var.function_app_dist}/${var.function_app_version}.zip"
   weka_sa               = "${var.function_app_storage_account_prefix}${local.location}"
   weka_sa_container     = "${var.function_app_storage_account_container_prefix}${local.location}"
@@ -79,7 +79,7 @@ locals {
 resource "azurerm_linux_function_app" "function_app" {
   name                       = "${local.alphanumeric_prefix_name}-${local.alphanumeric_cluster_name}-function-app"
   resource_group_name        = data.azurerm_resource_group.rg.name
-  location                   = data.azurerm_resource_group.rg.location
+  location                   = var.region
   service_plan_id            = azurerm_service_plan.app_service_plan.id
   storage_account_name       = azurerm_storage_account.deployment_sa.name
   storage_account_access_key = azurerm_storage_account.deployment_sa.primary_access_key
@@ -90,37 +90,37 @@ resource "azurerm_linux_function_app" "function_app" {
   }
 
   app_settings = {
-    "FUNCTIONS_WORKER_RUNTIME" = "custom"
+    "FUNCTIONS_WORKER_RUNTIME"       = "custom"
     "APPINSIGHTS_INSTRUMENTATIONKEY" = azurerm_application_insights.application_insights.instrumentation_key
-    "STATE_STORAGE_NAME" = azurerm_storage_account.deployment_sa.name
-    "STATE_CONTAINER_NAME" = azurerm_storage_container.deployment.name
-    "HOSTS_NUM" = var.cluster_size
-    "CLUSTER_NAME" = var.cluster_name
-    "PROTECTION_LEVEL" = var.protection_level
-    "STRIPE_WIDTH" = var.stripe_width != -1 ? var.stripe_width : local.stripe_width
-    "HOTSPARE" = var.hotspare
-    "VM_USERNAME" = var.vm_username
-    "COMPUTE_MEMORY" = var.container_number_map[var.instance_type].memory
-    "SUBSCRIPTION_ID" = data.azurerm_subscription.primary.subscription_id
-    "RESOURCE_GROUP_NAME" = data.azurerm_resource_group.rg.name
-    "LOCATION" = data.azurerm_resource_group.rg.location
-    "SET_OBS" = var.set_obs_integration
-    "OBS_NAME" = var.obs_name != "" ? var.obs_name : "${var.prefix}${var.cluster_name}obs"
-    "OBS_CONTAINER_NAME" = var.obs_container_name != "" ? var.obs_container_name : "${var.prefix}-${var.cluster_name}-obs"
-    "OBS_ACCESS_KEY" = var.blob_obs_access_key
-    "NUM_DRIVE_CONTAINERS" = var.container_number_map[var.instance_type].drive
-    "NUM_COMPUTE_CONTAINERS" = var.container_number_map[var.instance_type].compute
-    "NUM_FRONTEND_CONTAINERS" = var.container_number_map[var.instance_type].frontend
-    "NVMES_NUM" = var.container_number_map[var.instance_type].nvme
-    "TIERING_SSD_PERCENT" = var.tiering_ssd_percent
-    "PREFIX" = var.prefix
-    "KEY_VAULT_URI" = azurerm_key_vault.key_vault.vault_uri
-    "SUBNET" = var.subnets[0]
-    "INSTANCE_TYPE" = var.instance_type
-    "INSTALL_URL" =  var.install_weka_url != "" ? var.install_weka_url : "https://$TOKEN@get.weka.io/dist/v1/install/${var.weka_version}/${var.weka_version}"
-    "LOG_LEVEL" = var.function_app_log_level
+    "STATE_STORAGE_NAME"             = azurerm_storage_account.deployment_sa.name
+    "STATE_CONTAINER_NAME"           = azurerm_storage_container.deployment.name
+    "HOSTS_NUM"                      = var.cluster_size
+    "CLUSTER_NAME"                   = var.cluster_name
+    "PROTECTION_LEVEL"               = var.protection_level
+    "STRIPE_WIDTH"                   = var.stripe_width != -1 ? var.stripe_width : local.stripe_width
+    "HOTSPARE"                       = var.hotspare
+    "VM_USERNAME"                    = var.vm_username
+    "COMPUTE_MEMORY"                 = var.container_number_map[var.instance_type].memory
+    "SUBSCRIPTION_ID"                = data.azurerm_subscription.primary.subscription_id
+    "RESOURCE_GROUP_NAME"            = data.azurerm_resource_group.rg.name
+    "LOCATION"                       = data.azurerm_resource_group.rg.location
+    "SET_OBS"                        = var.set_obs_integration
+    "OBS_NAME"                       = var.obs_name != "" ? var.obs_name : "${var.prefix}${var.cluster_name}obs"
+    "OBS_CONTAINER_NAME"             = var.obs_container_name != "" ? var.obs_container_name : "${var.prefix}-${var.cluster_name}-obs"
+    "OBS_ACCESS_KEY"                 = var.blob_obs_access_key
+    "NUM_DRIVE_CONTAINERS"           = var.container_number_map[var.instance_type].drive
+    "NUM_COMPUTE_CONTAINERS"         = var.container_number_map[var.instance_type].compute
+    "NUM_FRONTEND_CONTAINERS"        = var.container_number_map[var.instance_type].frontend
+    "NVMES_NUM"                      = var.container_number_map[var.instance_type].nvme
+    "TIERING_SSD_PERCENT"            = var.tiering_ssd_percent
+    "PREFIX"                         = var.prefix
+    "KEY_VAULT_URI"                  = azurerm_key_vault.key_vault.vault_uri
+    "SUBNET"                         = var.subnets[0]
+    "INSTANCE_TYPE"                  = var.instance_type
+    "INSTALL_URL"                    = var.install_weka_url != "" ? var.install_weka_url : "https://$TOKEN@get.weka.io/dist/v1/install/${var.weka_version}/${var.weka_version}"
+    "LOG_LEVEL"                      = var.function_app_log_level
 
-    https_only = true
+    https_only               = true
     FUNCTIONS_WORKER_RUNTIME = "custom"
     FUNCTION_APP_EDIT_MODE   = "readonly"
     HASH                     = var.function_app_version
