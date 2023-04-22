@@ -133,10 +133,10 @@ variable "apt_repo_url" {
   default     = ""
 }
 
-# variable "private_dns_zone_name" {
-#   type        = string
-#   description = "The private DNS zone name."
-# }
+variable "private_dns_zone_name" {
+  type        = string
+  description = "The private DNS zone name."
+}
 
 variable "ofed_version" {
   type        = string
