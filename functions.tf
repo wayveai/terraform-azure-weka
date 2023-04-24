@@ -56,6 +56,7 @@ resource "azurerm_service_plan" "app_service_plan" {
   location            = data.azurerm_resource_group.rg.location
   os_type             = "Linux"
   sku_name            = "EP2"
+  tags                = var.tags_map
 }
 
 locals {
