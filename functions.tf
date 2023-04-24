@@ -13,6 +13,7 @@ resource "azurerm_application_insights" "application_insights" {
   resource_group_name = data.azurerm_resource_group.rg.name
   workspace_id        = azurerm_log_analytics_workspace.la_workspace.id
   application_type    = "web"
+  tags                = var.tags_map
 }
 resource "azurerm_monitor_diagnostic_setting" "insights_diagnostic_setting" {
   name                       = "${var.prefix}-${var.cluster_name}-insights-diagnostic-setting"
