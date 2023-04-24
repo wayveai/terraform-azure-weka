@@ -4,6 +4,7 @@ resource "azurerm_log_analytics_workspace" "la_workspace" {
   resource_group_name = data.azurerm_resource_group.rg.name
   sku                 = "PerGB2018"
   retention_in_days   = 30
+  tags                = var.tags_map
 }
 
 resource "azurerm_application_insights" "application_insights" {
@@ -132,6 +133,8 @@ resource "azurerm_linux_function_app" "function_app" {
   identity {
     type = "SystemAssigned"
   }
+  
+  tags = var.tags_map
 
   lifecycle {
     precondition {
