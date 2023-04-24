@@ -132,12 +132,6 @@ variable "apt_repo_url" {
   description = "The URL of the apt private repository."
   default     = ""
 }
-
-variable "private_dns_zone_name" {
-  type        = string
-  description = "The private DNS zone name."
-}
-
 variable "ofed_version" {
   type        = string
   description = "The OFED driver version to for ubuntu 18."

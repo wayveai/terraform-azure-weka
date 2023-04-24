@@ -136,18 +136,3 @@ resource "azurerm_subnet_network_security_group_association" "sg-association" {
   network_security_group_id = azurerm_network_security_group.sg.id
   depends_on                = [azurerm_network_security_group.sg]
 }
-
-# ================== Private DNS ========================= #
-resource "azurerm_private_dns_zone" "dns" {
-  name                = "${var.prefix}.private.net"
-  resource_group_name = data.azurerm_resource_group.rg.name
-  tags                = merge(var.tags_map)
-}
-
-resource "azurerm_private_dns_zone_virtual_network_link" "dns_vnet_link" {
-  name                  = "${var.prefix}-private-network-link"
-  resource_group_name   = data.azurerm_resource_group.rg.name
-  private_dns_zone_name = azurerm_private_dns_zone.dns.name
-  virtual_network_id    = var.vnet_name != null ? data.azurerm_virtual_network.vnet_data[0].id : azurerm_virtual_network.vnet[0].id
-  registration_enabled  = true
-}
