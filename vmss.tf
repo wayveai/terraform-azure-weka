@@ -79,7 +79,7 @@ resource "azurerm_proximity_placement_group" "ppg" {
 resource "azurerm_linux_virtual_machine_scale_set" "custom_image_vmss" {
   count                           = var.custom_image_id != null ? 1 : 0
   name                            = "${var.prefix}-${var.cluster_name}-vmss"
-  location                        = data.azurerm_resource_group.rg.location
+  location                        = var.region
   resource_group_name             = var.rg_name
   sku                             = var.instance_type
   upgrade_mode                    = "Manual"
@@ -155,7 +155,7 @@ resource "azurerm_linux_virtual_machine_scale_set" "custom_image_vmss" {
 resource "azurerm_linux_virtual_machine_scale_set" "default_image_vmss" {
   count                           = var.custom_image_id == null ? 1 : 0
   name                            = "${var.prefix}-${var.cluster_name}-vmss"
-  location                        = data.azurerm_resource_group.rg.location
+  location                        = var.region
   resource_group_name             = var.rg_name
   sku                             = var.instance_type
   upgrade_mode                    = "Manual"
